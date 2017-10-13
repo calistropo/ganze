@@ -1,0 +1,52 @@
+version: '3'
+services:
+  kafka:
+    image: "spotify/kafka"
+    ports:
+     - "9092:9092"
+     - "2181:2181"
+    environment:
+     - ADVERTISED_HOST=localhost
+     - ADVERTISED_PORT=9092
+    network_mode: "host"
+  zimmer:
+    build: ./zimmer/target/docker
+    network_mode: "host"
+  enricher:
+    image: "epahomov/docker-spark:lightweighted"
+    network_mode: "host"
+    volumes:
+     - "./hopkins/target/scala-2.11/hopkins_2.11-0.1.0-SNAPSHOT.jar:/jobs.jar"
+     - "./hopkins/init-jobs.sh:/init-jobs.sh"
+    entrypoint: ["./init-jobs.sh","enrich"]
+  accountant:
+    image: "epahomov/docker-spark:lightweighted"
+    network_mode: "host"
+    volumes:
+     - "./hopkins/target/scala-2.11/hopkins_2.11-0.1.0-SNAPSHOT.jar:/jobs.jar"
+     - "./hopkins/init-jobs.sh:/init-jobs.sh"
+    entrypoint: ["./init-jobs.sh","count_per_tiles"]
+  events_saver:
+    image: "epahomov/docker-spark:lightweighted"
+    network_mode: "host"
+    volumes:
+     - "./hopkins/target/scala-2.11/hopkins_2.11-0.1.0-SNAPSHOT.jar:/jobs.jar"
+     - "./hopkins/init-jobs.sh:/init-jobs.sh"
+    entrypoint: ["./init-jobs.sh","save_vehicle_events"]
+  counts_saver:
+    image: "epahomov/docker-spark:lightweighted"
+    network_mode: "host"
+    volumes:
+     - "./hopkins/target/scala-2.11/hopkins_2.11-0.1.0-SNAPSHOT.jar:/jobs.jar"
+     - "./hopkins/init-jobs.sh:/init-jobs.sh"
+    entrypoint: ["./init-jobs.sh","save_counts_per_tile"]
+  endurance:
+    image: "cassandra:latest"
+    network_mode: "host"
+    volumes:
+     - "./endurance/init-db.sh:/init-db.sh"
+     - "./endurance/init-db.cql:/init-db.cql"
+
+    
+
+
